@@ -47,6 +47,41 @@ services:
       - postgres-south-america
       - postgres-global
 
+  # CommentService - separate swimlane
+  comment-service:
+    build: .
+    ports:
+      - "8082:8080"
+    depends_on:
+      - postgres-comment
+      - profanity-service
+    environment:
+      - PROFANITY_SERVICE_URL=http://profanity-service:8080
+
+  # ProfanityService - separate swimlane
+  profanity-service:
+    build: .
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres-profanity
+
+  # CommentDatabase
+  postgres-comment:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: commentdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  # ProfanityDatabase
+  postgres-profanity:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: profanitydb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
   # Z-axis split: 8 continent databases (7 continents + global)
   postgres-asia:
     image: postgres:17
