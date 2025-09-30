@@ -1,5 +1,7 @@
 package com.example.demo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,6 +14,8 @@ import java.util.List;
 
 @Service
 public class ArticleService {
+
+    private static final Logger log = LoggerFactory.getLogger(ArticleService.class);
 
     @Autowired
     private DraftService draftService;
@@ -50,11 +54,15 @@ public class ArticleService {
         String continent = article.getContinent();
         if (continent == null) continent = "GLOBAL";
 
+        log.info("Creating article in {} database: title={}", continent, article.getTitle());
+
         EntityManager em = getEntityManager(continent);
         em.getTransaction().begin();
         em.persist(article);
         em.getTransaction().commit();
         em.close();
+
+        log.info("Article created successfully: id={}, continent={}", article.getId(), continent);
         return article;
     }
 
@@ -78,19 +86,30 @@ public class ArticleService {
     public Article readById(Long id, String continent) {
         if (continent == null) continent = "GLOBAL";
 
+        log.debug("Fetching article: id={}, continent={}", id, continent);
+
         // Only use cache for GLOBAL articles
         if ("GLOBAL".equalsIgnoreCase(continent)) {
             Article cachedArticle = articleCacheService.getFromCache(id);
             if (cachedArticle != null) {
+                log.info("Article cache HIT: id={}", id);
                 cacheMetricsService.recordArticleCacheHit();
                 return cachedArticle;
             }
+            log.info("Article cache MISS: id={}", id);
             cacheMetricsService.recordArticleCacheMiss();
         }
 
         EntityManager em = getEntityManager(continent);
         Article article = em.find(Article.class, id);
         em.close();
+
+        if (article != null) {
+            log.info("Article fetched from database: id={}, continent={}", id, continent);
+        } else {
+            log.warn("Article not found: id={}, continent={}", id, continent);
+        }
+
         return article;
     }
 
@@ -109,6 +128,9 @@ public class ArticleService {
 
     @RabbitListener(queues = "article-queue")
     public void processArticleQueue(ArticleQueueMessage message) {
+        log.info("Received article from queue: draftId={}, continent={}, title={}",
+                message.getDraftId(), message.getContinent(), message.getTitle());
+
         // Create article from queue message
         Article article = new Article();
         article.setTitle(message.getTitle());
@@ -119,6 +141,7 @@ public class ArticleService {
         // Delete the draft after successful article creation
         draftService.delete(message.getDraftId());
 
-        System.out.println("Article created from draft " + message.getDraftId() + " in continent: " + message.getContinent());
+        log.info("Article created from draft and draft deleted: draftId={}, articleId={}, continent={}",
+                message.getDraftId(), article.getId(), message.getContinent());
     }
 }

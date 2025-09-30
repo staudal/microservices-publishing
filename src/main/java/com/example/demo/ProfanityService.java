@@ -1,11 +1,15 @@
 package com.example.demo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class ProfanityService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProfanityService.class);
 
     private final ProfanityRepository profanityRepository;
 
@@ -14,6 +18,8 @@ public class ProfanityService {
     }
 
     public boolean checkProfanity(String text) {
+        log.debug("Checking text for profanity");
+
         if (text == null || text.isEmpty()) {
             return false;
         }
@@ -24,10 +30,12 @@ public class ProfanityService {
         List<Profanity> dbProfanities = profanityRepository.findAll();
         for (Profanity profanity : dbProfanities) {
             if (lowerText.contains(profanity.getWord().toLowerCase())) {
+                log.warn("Profanity detected: word={}", profanity.getWord());
                 return true;
             }
         }
 
+        log.debug("No profanity detected");
         return false;
     }
 

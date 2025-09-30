@@ -1,6 +1,8 @@
 package com.example.demo;
 
 import jakarta.persistence.EntityManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,6 +21,8 @@ import java.util.concurrent.TimeUnit;
 @EnableScheduling
 public class ArticleCacheService {
 
+    private static final Logger log = LoggerFactory.getLogger(ArticleCacheService.class);
+
     @Autowired @Qualifier("globalEntityManager")
     private LocalContainerEntityManagerFactoryBean globalEmf;
 
@@ -31,7 +35,7 @@ public class ArticleCacheService {
     // Refresh cache every hour (for testing, change to "0 * * * * *")
     @Scheduled(cron = "0 0 * * * *")
     public void refreshCache() {
-        System.out.println("ArticleCache: Starting cache refresh at " + LocalDateTime.now());
+        log.info("ArticleCache: Starting offline cache refresh");
 
         EntityManager em = globalEmf.getObject().createEntityManager();
         try {
@@ -53,9 +57,9 @@ public class ArticleCacheService {
                 cachedCount++;
             }
 
-            System.out.println("ArticleCache: Refreshed " + cachedCount + " articles in cache");
+            log.info("ArticleCache: Offline refresh completed - cached {} articles", cachedCount);
         } catch (Exception e) {
-            System.err.println("ArticleCache: Error refreshing cache - " + e.getMessage());
+            log.error("ArticleCache: Error during offline refresh: {}", e.getMessage(), e);
         } finally {
             em.close();
         }

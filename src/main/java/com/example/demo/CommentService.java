@@ -1,5 +1,7 @@
 package com.example.demo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -9,6 +11,8 @@ import java.util.List;
 
 @Service
 public class CommentService {
+
+    private static final Logger log = LoggerFactory.getLogger(CommentService.class);
 
     private final CommentRepository commentRepository;
     private final RestTemplate restTemplate;
@@ -40,12 +44,18 @@ public class CommentService {
     }
 
     public Comment create(Comment comment) {
+        log.info("Creating comment for articleId={}", comment.getArticleId());
+
         // Check for profanity before saving
         boolean hasProfanity = checkProfanity(comment.getText());
         if (hasProfanity) {
+            log.warn("Comment rejected due to profanity: articleId={}", comment.getArticleId());
             throw new IllegalArgumentException("Comment contains profanity");
         }
-        return commentRepository.save(comment);
+
+        Comment saved = commentRepository.save(comment);
+        log.info("Comment created successfully: id={}, articleId={}", saved.getId(), saved.getArticleId());
+        return saved;
     }
 
     public List<Comment> readAll() {
@@ -57,8 +67,11 @@ public class CommentService {
     }
 
     public List<Comment> readByArticleId(Long articleId) {
+        log.debug("Fetching comments for articleId={}", articleId);
         // Use the cache service which handles cache-aside pattern
-        return commentCacheService.getCommentsByArticleId(articleId, cacheMetricsService);
+        List<Comment> comments = commentCacheService.getCommentsByArticleId(articleId, cacheMetricsService);
+        log.info("Fetched {} comments for articleId={}", comments.size(), articleId);
+        return comments;
     }
 
     private boolean checkProfanity(String text) {
@@ -68,10 +81,10 @@ public class CommentService {
             if (lastFailureTime != null &&
                 Duration.between(lastFailureTime, Instant.now()).compareTo(TIMEOUT_DURATION) > 0) {
                 circuitState = CircuitBreakerState.HALF_OPEN;
-                System.out.println("Circuit breaker: OPEN -> HALF_OPEN (testing recovery)");
+                log.info("Circuit breaker: OPEN -> HALF_OPEN (testing recovery)");
             } else {
                 // Circuit is still open, fail fast
-                System.out.println("Circuit breaker: OPEN - skipping profanity check (fail open)");
+                log.warn("Circuit breaker: OPEN - skipping profanity check (fail open)");
                 return false;
             }
         }
@@ -88,21 +101,24 @@ public class CommentService {
             if (circuitState == CircuitBreakerState.HALF_OPEN) {
                 circuitState = CircuitBreakerState.CLOSED;
                 failureCount = 0;
-                System.out.println("Circuit breaker: HALF_OPEN -> CLOSED (service recovered)");
+                log.info("Circuit breaker: HALF_OPEN -> CLOSED (service recovered)");
             }
 
-            return response != null && response.isProfane();
+            boolean isProfane = response != null && response.isProfane();
+            log.debug("Profanity check result: isProfane={}", isProfane);
+            return isProfane;
         } catch (Exception e) {
             // Record failure
             failureCount++;
             lastFailureTime = Instant.now();
 
-            System.out.println("Circuit breaker: Profanity service call failed (attempt " + failureCount + "/" + FAILURE_THRESHOLD + ")");
+            log.error("Circuit breaker: Profanity service call failed (attempt {}/{}): {}",
+                    failureCount, FAILURE_THRESHOLD, e.getMessage());
 
             // Open circuit if threshold reached
             if (failureCount >= FAILURE_THRESHOLD) {
                 circuitState = CircuitBreakerState.OPEN;
-                System.out.println("Circuit breaker: CLOSED -> OPEN (threshold reached)");
+                log.error("Circuit breaker: CLOSED -> OPEN (threshold reached)");
             }
 
             // Fail open for availability - allow comment through
