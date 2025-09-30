@@ -96,6 +96,14 @@ services:
     depends_on:
       - postgres-profanity
 
+  # NewsletterService - separate swimlane
+  newsletter-service:
+    build: .
+    ports:
+      - "8085:8080"
+    depends_on:
+      - nginx
+
   # DraftDatabase
   postgres-draft:
     image: postgres:17
