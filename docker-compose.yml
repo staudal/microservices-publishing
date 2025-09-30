@@ -1,26 +1,4 @@
 services:
-  postgres:
-    image: postgres:17
-    environment:
-      POSTGRES_DB: articledb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-
-  article-service-1:
-    build: .
-    depends_on:
-      - postgres
-
-  article-service-2:
-    build: .
-    depends_on:
-      - postgres
-
-  article-service-3:
-    build: .
-    depends_on:
-      - postgres
-
   nginx:
     image: nginx:latest
     volumes:
@@ -31,3 +9,97 @@ services:
       - article-service-1
       - article-service-2
       - article-service-3
+
+  # X-axis split: 3 application instances
+  article-service-1:
+    build: .
+    depends_on:
+      - postgres-asia
+      - postgres-europe
+      - postgres-africa
+      - postgres-antarctica
+      - postgres-north-america
+      - postgres-oceania
+      - postgres-south-america
+      - postgres-global
+
+  article-service-2:
+    build: .
+    depends_on:
+      - postgres-asia
+      - postgres-europe
+      - postgres-africa
+      - postgres-antarctica
+      - postgres-north-america
+      - postgres-oceania
+      - postgres-south-america
+      - postgres-global
+
+  article-service-3:
+    build: .
+    depends_on:
+      - postgres-asia
+      - postgres-europe
+      - postgres-africa
+      - postgres-antarctica
+      - postgres-north-america
+      - postgres-oceania
+      - postgres-south-america
+      - postgres-global
+
+  # Z-axis split: 8 continent databases (7 continents + global)
+  postgres-asia:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: articledb_asia
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  postgres-europe:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: articledb_europe
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  postgres-africa:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: articledb_africa
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  postgres-antarctica:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: articledb_antarctica
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  postgres-north-america:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: articledb_north_america
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  postgres-oceania:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: articledb_oceania
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  postgres-south-america:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: articledb_south_america
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  postgres-global:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: articledb_global
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres

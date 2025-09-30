@@ -8,24 +8,24 @@ import java.util.List;
 @RequestMapping("/articles")
 public class ArticleController {
 
-    private final ArticleRepository articleRepository;
+    private final ArticleService articleService;
 
-    public ArticleController(ArticleRepository articleRepository) {
-        this.articleRepository = articleRepository;
+    public ArticleController(ArticleService articleService) {
+        this.articleService = articleService;
     }
 
     @PostMapping
     public Article create(@RequestBody Article article) {
-        return articleRepository.save(article);
+        return articleService.create(article);
     }
 
     @GetMapping
     public List<Article> readAll() {
-        return articleRepository.findAll();
+        return articleService.readAll();
     }
 
     @GetMapping("/{id}")
-    public Article readById(@PathVariable Long id) {
-        return articleRepository.findById(id).orElse(null);
+    public Article readById(@PathVariable Long id, @RequestParam(required = false) String continent) {
+        return articleService.readById(id, continent);
     }
 }
