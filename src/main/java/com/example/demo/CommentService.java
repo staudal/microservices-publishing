@@ -12,6 +12,8 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final RestTemplate restTemplate;
+    private final CommentCacheService commentCacheService;
+    private final CacheMetricsService cacheMetricsService;
     private static final String PROFANITY_SERVICE_URL = "http://profanity-service:8080/profanity/check";
 
     // Circuit breaker state
@@ -21,8 +23,12 @@ public class CommentService {
     private static final int FAILURE_THRESHOLD = 3;
     private static final Duration TIMEOUT_DURATION = Duration.ofSeconds(30);
 
-    public CommentService(CommentRepository commentRepository) {
+    public CommentService(CommentRepository commentRepository,
+                         CommentCacheService commentCacheService,
+                         CacheMetricsService cacheMetricsService) {
         this.commentRepository = commentRepository;
+        this.commentCacheService = commentCacheService;
+        this.cacheMetricsService = cacheMetricsService;
         this.restTemplate = new RestTemplate();
     }
 
@@ -47,6 +53,11 @@ public class CommentService {
 
     public Comment readById(Long id) {
         return commentRepository.findById(id).orElse(null);
+    }
+
+    public List<Comment> readByArticleId(Long articleId) {
+        // Use the cache service which handles cache-aside pattern
+        return commentCacheService.getCommentsByArticleId(articleId, cacheMetricsService);
     }
 
     private boolean checkProfanity(String text) {

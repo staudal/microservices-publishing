@@ -16,6 +16,12 @@ public class ArticleService {
     @Autowired
     private DraftService draftService;
 
+    @Autowired
+    private ArticleCacheService articleCacheService;
+
+    @Autowired
+    private CacheMetricsService cacheMetricsService;
+
     @Autowired @Qualifier("asiaEntityManager")
     private LocalContainerEntityManagerFactoryBean asiaEmf;
 
@@ -71,6 +77,16 @@ public class ArticleService {
 
     public Article readById(Long id, String continent) {
         if (continent == null) continent = "GLOBAL";
+
+        // Only use cache for GLOBAL articles
+        if ("GLOBAL".equalsIgnoreCase(continent)) {
+            Article cachedArticle = articleCacheService.getFromCache(id);
+            if (cachedArticle != null) {
+                cacheMetricsService.recordArticleCacheHit();
+                return cachedArticle;
+            }
+            cacheMetricsService.recordArticleCacheMiss();
+        }
 
         EntityManager em = getEntityManager(continent);
         Article article = em.find(Article.class, id);

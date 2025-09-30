@@ -1,4 +1,10 @@
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+
   rabbitmq:
     image: rabbitmq:3-management
     ports:
@@ -23,6 +29,7 @@ services:
   article-service-1:
     build: .
     depends_on:
+      - redis
       - rabbitmq
       - postgres-asia
       - postgres-europe
@@ -36,6 +43,7 @@ services:
   article-service-2:
     build: .
     depends_on:
+      - redis
       - rabbitmq
       - postgres-asia
       - postgres-europe
@@ -49,6 +57,7 @@ services:
   article-service-3:
     build: .
     depends_on:
+      - redis
       - rabbitmq
       - postgres-asia
       - postgres-europe
@@ -83,6 +92,7 @@ services:
     ports:
       - "8082:8080"
     depends_on:
+      - redis
       - postgres-comment
       - profanity-service
     environment:

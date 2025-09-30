@@ -37,6 +37,11 @@ public class CommentController {
         return commentService.readById(id);
     }
 
+    @GetMapping("/article/{articleId}")
+    public List<Comment> readByArticleId(@PathVariable Long articleId) {
+        return commentService.readByArticleId(articleId);
+    }
+
     static class ErrorResponse {
         private String message;
 
