@@ -24,4 +24,8 @@ public class DraftService {
     public Draft readById(Long id) {
         return draftRepository.findById(id).orElse(null);
     }
+
+    public void delete(Long id) {
+        draftRepository.deleteById(id);
+    }
 }

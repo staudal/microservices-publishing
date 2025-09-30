@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -11,6 +12,9 @@ import java.util.List;
 
 @Service
 public class ArticleService {
+
+    @Autowired
+    private DraftService draftService;
 
     @Autowired @Qualifier("asiaEntityManager")
     private LocalContainerEntityManagerFactoryBean asiaEmf;
@@ -85,5 +89,20 @@ public class ArticleService {
             case "SOUTH_AMERICA" -> southAmericaEmf.getObject().createEntityManager();
             default -> globalEmf.getObject().createEntityManager();
         };
+    }
+
+    @RabbitListener(queues = "article-queue")
+    public void processArticleQueue(ArticleQueueMessage message) {
+        // Create article from queue message
+        Article article = new Article();
+        article.setTitle(message.getTitle());
+        article.setContinent(message.getContinent());
+
+        create(article);
+
+        // Delete the draft after successful article creation
+        draftService.delete(message.getDraftId());
+
+        System.out.println("Article created from draft " + message.getDraftId() + " in continent: " + message.getContinent());
     }
 }

@@ -1,4 +1,13 @@
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
   nginx:
     image: nginx:latest
     volumes:
@@ -14,6 +23,7 @@ services:
   article-service-1:
     build: .
     depends_on:
+      - rabbitmq
       - postgres-asia
       - postgres-europe
       - postgres-africa
@@ -26,6 +36,7 @@ services:
   article-service-2:
     build: .
     depends_on:
+      - rabbitmq
       - postgres-asia
       - postgres-europe
       - postgres-africa
@@ -38,6 +49,7 @@ services:
   article-service-3:
     build: .
     depends_on:
+      - rabbitmq
       - postgres-asia
       - postgres-europe
       - postgres-africa
@@ -53,6 +65,16 @@ services:
     ports:
       - "8083:8080"
     depends_on:
+      - rabbitmq
+      - postgres-draft
+
+  # PublisherService - separate swimlane
+  publisher-service:
+    build: .
+    ports:
+      - "8084:8080"
+    depends_on:
+      - rabbitmq
       - postgres-draft
 
   # CommentService - separate swimlane
