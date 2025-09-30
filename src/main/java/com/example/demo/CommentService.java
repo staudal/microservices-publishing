@@ -25,11 +25,12 @@ public class CommentService {
 
     public CommentService(CommentRepository commentRepository,
                          CommentCacheService commentCacheService,
-                         CacheMetricsService cacheMetricsService) {
+                         CacheMetricsService cacheMetricsService,
+                         RestTemplate restTemplate) {
         this.commentRepository = commentRepository;
         this.commentCacheService = commentCacheService;
         this.cacheMetricsService = cacheMetricsService;
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = restTemplate;
     }
 
     enum CircuitBreakerState {

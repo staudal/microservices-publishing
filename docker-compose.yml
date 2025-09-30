@@ -1,4 +1,9 @@
 services:
+  zipkin:
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+
   redis:
     image: redis:7-alpine
     ports:
@@ -29,6 +34,7 @@ services:
   article-service-1:
     build: .
     depends_on:
+      - zipkin
       - redis
       - rabbitmq
       - postgres-asia
@@ -43,6 +49,7 @@ services:
   article-service-2:
     build: .
     depends_on:
+      - zipkin
       - redis
       - rabbitmq
       - postgres-asia
@@ -57,6 +64,7 @@ services:
   article-service-3:
     build: .
     depends_on:
+      - zipkin
       - redis
       - rabbitmq
       - postgres-asia
@@ -74,6 +82,7 @@ services:
     ports:
       - "8083:8080"
     depends_on:
+      - zipkin
       - rabbitmq
       - postgres-draft
 
@@ -83,6 +92,7 @@ services:
     ports:
       - "8084:8080"
     depends_on:
+      - zipkin
       - rabbitmq
       - postgres-draft
 
@@ -92,6 +102,7 @@ services:
     ports:
       - "8082:8080"
     depends_on:
+      - zipkin
       - redis
       - postgres-comment
       - profanity-service
@@ -104,6 +115,7 @@ services:
     ports:
       - "8081:8080"
     depends_on:
+      - zipkin
       - postgres-profanity
 
   # NewsletterService - separate swimlane
@@ -112,6 +124,7 @@ services:
     ports:
       - "8085:8080"
     depends_on:
+      - zipkin
       - nginx
 
   # DraftDatabase

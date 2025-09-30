@@ -13,8 +13,8 @@ public class NewsletterService {
     private final RestTemplate restTemplate;
     private static final String ARTICLE_SERVICE_URL = "http://nginx/articles";
 
-    public NewsletterService() {
-        this.restTemplate = new RestTemplate();
+    public NewsletterService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
 
     // Run once a day at midnight
