@@ -3,6 +3,8 @@ package com.example.demo;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -12,9 +14,22 @@ public class CommentService {
     private final RestTemplate restTemplate;
     private static final String PROFANITY_SERVICE_URL = "http://profanity-service:8080/profanity/check";
 
+    // Circuit breaker state
+    private CircuitBreakerState circuitState = CircuitBreakerState.CLOSED;
+    private int failureCount = 0;
+    private Instant lastFailureTime = null;
+    private static final int FAILURE_THRESHOLD = 3;
+    private static final Duration TIMEOUT_DURATION = Duration.ofSeconds(30);
+
     public CommentService(CommentRepository commentRepository) {
         this.commentRepository = commentRepository;
         this.restTemplate = new RestTemplate();
+    }
+
+    enum CircuitBreakerState {
+        CLOSED,  // Normal operation
+        OPEN,    // Failing - don't call service
+        HALF_OPEN // Testing if service recovered
     }
 
     public Comment create(Comment comment) {
@@ -35,6 +50,20 @@ public class CommentService {
     }
 
     private boolean checkProfanity(String text) {
+        // Check circuit breaker state
+        if (circuitState == CircuitBreakerState.OPEN) {
+            // Check if timeout has passed
+            if (lastFailureTime != null &&
+                Duration.between(lastFailureTime, Instant.now()).compareTo(TIMEOUT_DURATION) > 0) {
+                circuitState = CircuitBreakerState.HALF_OPEN;
+                System.out.println("Circuit breaker: OPEN -> HALF_OPEN (testing recovery)");
+            } else {
+                // Circuit is still open, fail fast
+                System.out.println("Circuit breaker: OPEN - skipping profanity check (fail open)");
+                return false;
+            }
+        }
+
         try {
             ProfanityCheckRequest request = new ProfanityCheckRequest(text);
             ProfanityCheckResponse response = restTemplate.postForObject(
@@ -42,9 +71,29 @@ public class CommentService {
                     request,
                     ProfanityCheckResponse.class
             );
+
+            // Success - reset circuit breaker
+            if (circuitState == CircuitBreakerState.HALF_OPEN) {
+                circuitState = CircuitBreakerState.CLOSED;
+                failureCount = 0;
+                System.out.println("Circuit breaker: HALF_OPEN -> CLOSED (service recovered)");
+            }
+
             return response != null && response.isProfane();
         } catch (Exception e) {
-            // If profanity service is down, allow comment (fail open for availability)
+            // Record failure
+            failureCount++;
+            lastFailureTime = Instant.now();
+
+            System.out.println("Circuit breaker: Profanity service call failed (attempt " + failureCount + "/" + FAILURE_THRESHOLD + ")");
+
+            // Open circuit if threshold reached
+            if (failureCount >= FAILURE_THRESHOLD) {
+                circuitState = CircuitBreakerState.OPEN;
+                System.out.println("Circuit breaker: CLOSED -> OPEN (threshold reached)");
+            }
+
+            // Fail open for availability - allow comment through
             return false;
         }
     }
