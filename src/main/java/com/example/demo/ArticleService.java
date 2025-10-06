@@ -126,7 +126,7 @@ public class ArticleService {
         };
     }
 
-    @RabbitListener(queues = "article-queue")
+    @RabbitListener(queues = "article-queue", containerFactory = "rabbitListenerContainerFactory")
     public void processArticleQueue(ArticleQueueMessage message) {
         log.info("Received article from queue: draftId={}, continent={}, title={}",
                 message.getDraftId(), message.getContinent(), message.getTitle());
