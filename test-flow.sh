@@ -9,7 +9,7 @@ echo ""
 
 # Step 1: Create a draft
 echo "1. Creating draft..."
-DRAFT_RESPONSE=$(curl -s -X POST http://localhost:8083/drafts \
+DRAFT_RESPONSE=$(curl -s -X POST http://localhost:8081/drafts \
   -H "Content-Type: application/json" \
   -d '{"title":"Test Article: Amazing News from Script"}')
 
@@ -19,7 +19,7 @@ echo ""
 
 # Step 2: Publish the draft to GLOBAL
 echo "2. Publishing draft to article queue (GLOBAL)..."
-PUBLISH_RESPONSE=$(curl -s -X POST "http://localhost:8084/publish/${DRAFT_ID}?continent=GLOBAL")
+PUBLISH_RESPONSE=$(curl -s -X POST "http://localhost:8082/publish/${DRAFT_ID}?continent=GLOBAL")
 echo "   ✓ $PUBLISH_RESPONSE"
 echo ""
 
@@ -54,7 +54,7 @@ echo ""
 
 # Step 6: Create a comment
 echo "6. Creating comment for article..."
-COMMENT_RESPONSE=$(curl -s -X POST http://localhost:8082/comments \
+COMMENT_RESPONSE=$(curl -s -X POST http://localhost:8083/comments \
   -H "Content-Type: application/json" \
   -d "{\"text\":\"This is an amazing article! Generated from test script.\",\"articleId\":${ARTICLE_ID}}")
 
@@ -64,13 +64,13 @@ echo ""
 
 # Step 7: Fetch comments for the article
 echo "7. Fetching all comments for article..."
-COMMENTS=$(curl -s http://localhost:8082/comments/article/${ARTICLE_ID})
+COMMENTS=$(curl -s http://localhost:8083/comments/article/${ARTICLE_ID})
 echo "   ✓ Comments: $COMMENTS"
 echo ""
 
 # Step 8: Trigger article cache refresh
 echo "8. Triggering article cache refresh..."
-CACHE_RESPONSE=$(curl -s http://localhost:8082/metrics/refresh-article-cache)
+CACHE_RESPONSE=$(curl -s http://localhost:8083/metrics/refresh-article-cache)
 echo "   ✓ $CACHE_RESPONSE"
 echo ""
 
@@ -85,7 +85,7 @@ echo "✓ Full flow completed successfully!"
 echo "=========================================="
 echo ""
 echo "Check your dashboards:"
-echo "  - Cache metrics: http://localhost:8082/metrics/dashboard"
+echo "  - Cache metrics: http://localhost:8083/metrics/dashboard"
 echo "  - Traces: http://localhost:9411"
 echo "  - Logs: http://localhost:3000"
 echo ""

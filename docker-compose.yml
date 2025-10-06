@@ -64,7 +64,8 @@ services:
 
   # X-axis split: 3 application instances
   article-service-1:
-    build: .
+    image: microservices-publishing-article-service:latest
+    build: ./article-service
     environment:
       - SPRING_APPLICATION_NAME=article-service
     depends_on:
@@ -81,7 +82,7 @@ services:
       - postgres-global
 
   article-service-2:
-    build: .
+    image: microservices-publishing-article-service:latest
     environment:
       - SPRING_APPLICATION_NAME=article-service
     depends_on:
@@ -98,7 +99,7 @@ services:
       - postgres-global
 
   article-service-3:
-    build: .
+    image: microservices-publishing-article-service:latest
     environment:
       - SPRING_APPLICATION_NAME=article-service
     depends_on:
@@ -116,33 +117,32 @@ services:
 
   # DraftService - separate swimlane
   draft-service:
-    build: .
+    build: ./draft-service
     ports:
-      - "8083:8080"
+      - "8081:8080"
     environment:
       - SPRING_APPLICATION_NAME=draft-service
     depends_on:
       - zipkin
-      - rabbitmq
       - postgres-draft
 
   # PublisherService - separate swimlane
   publisher-service:
-    build: .
+    build: ./publisher-service
     ports:
-      - "8084:8080"
+      - "8082:8080"
     environment:
       - SPRING_APPLICATION_NAME=publisher-service
     depends_on:
       - zipkin
       - rabbitmq
-      - postgres-draft
+      - draft-service
 
   # CommentService - separate swimlane
   comment-service:
-    build: .
+    build: ./comment-service
     ports:
-      - "8082:8080"
+      - "8083:8080"
     depends_on:
       - zipkin
       - redis
@@ -154,9 +154,9 @@ services:
 
   # ProfanityService - separate swimlane
   profanity-service:
-    build: .
+    build: ./profanity-service
     ports:
-      - "8081:8080"
+      - "8084:8080"
     environment:
       - SPRING_APPLICATION_NAME=profanity-service
     depends_on:
@@ -165,14 +165,14 @@ services:
 
   # NewsletterService - separate swimlane
   newsletter-service:
-    build: .
+    build: ./newsletter-service
     ports:
       - "8085:8080"
     environment:
       - SPRING_APPLICATION_NAME=newsletter-service
     depends_on:
       - zipkin
-      - nginx
+      - article-service-1
 
   # DraftDatabase
   postgres-draft:

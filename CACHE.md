@@ -43,7 +43,7 @@ Two Redis-based cache layers improve availability and response times for geograp
 
 ```bash
 # Manually refresh article cache
-curl http://localhost:8082/metrics/refresh-article-cache
+curl http://localhost:8080/metrics/refresh-article-cache
 
 # Fetch GLOBAL article (uses cache after refresh)
 curl "http://localhost:8080/articles/1?continent=GLOBAL"
