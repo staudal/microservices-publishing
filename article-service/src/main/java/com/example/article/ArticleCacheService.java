@@ -12,9 +12,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -33,18 +30,15 @@ public class ArticleCacheService {
     private static final String CACHE_KEY_PREFIX = "article:global:";
     private static final int CACHE_DAYS = 14;
 
-    // Refresh cache every hour (for testing, change to "0 * * * * *")
+    // Refresh cache every hour
     @Scheduled(cron = "0 0 * * * *")
     public void refreshCache() {
         log.info("ArticleCache: Starting offline cache refresh");
 
         EntityManager em = globalEmf.getObject().createEntityManager();
         try {
-            // Calculate date 14 days ago
-            LocalDateTime fourteenDaysAgo = LocalDateTime.now().minusDays(CACHE_DAYS);
-            Date cutoffDate = Date.from(fourteenDaysAgo.atZone(ZoneId.systemDefault()).toInstant());
 
-            // Fetch articles from last 14 days (assuming Article has a createdAt field)
+            // Fetch articles from last 14 days
             // Since Article entity doesn't have timestamp, we'll cache all articles for now
             List<Article> articles = em.createQuery(
                     "SELECT a FROM Article a",

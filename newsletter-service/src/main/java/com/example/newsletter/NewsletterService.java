@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class NewsletterService {
@@ -50,8 +49,4 @@ public class NewsletterService {
             System.err.println("Newsletter: Failed to fetch articles or send newsletter: " + e.getMessage());
         }
     }
-
-    // For testing: run every minute
-    // @Scheduled(cron = "0 * * * * *")
-    // public void sendDailyNewsletter() { ... }
 }
