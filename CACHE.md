@@ -49,5 +49,5 @@ curl http://localhost:8080/metrics/refresh-article-cache
 curl "http://localhost:8080/articles/1?continent=GLOBAL"
 
 # Fetch comments (auto-populates cache)
-curl http://localhost:8082/comments/article/1
+curl http://localhost:8083/comments/article/1
 ```
